@@ -1,0 +1,45 @@
+name: Monitor Licitaciones Imprenta y Papeleria Ceuta
+
+on:
+  schedule:
+    # Se ejecuta de Lunes a Viernes cada 4 horas entre las 08:00 y las 20:00 (hora Ceuta/Madrid)
+    - cron: '0 7,11,15,19 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      modo_prueba:
+        description: '¿Enviar mensaje de prueba a Telegram? (true/false)'
+        required: true
+        default: 'true'
+
+permissions:
+  contents: write
+
+jobs:
+  buscar-licitaciones:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: pip install requests
+
+      - name: Ejecutar rastreador de Ceuta
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          MODO_PRUEBA: ${{ github.event.inputs.modo_prueba || 'false' }}
+        run: python monitor_ceuta.py
+
+      - name: Guardar memoria de licitaciones vistas
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add licitaciones_vistas.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Actualizar historial de licitaciones" && git push)
