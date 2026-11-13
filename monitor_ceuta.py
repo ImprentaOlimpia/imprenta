@@ -200,6 +200,11 @@ def procesar_feeds():
                         nuevas_encontradas += 1
 
     guardar_historial(vistas)
+
+    if nuevas_encontradas == 0:
+        hora_str = ahora.strftime("%H:%M")
+        enviar_telegram(f"ℹ️ <b>Revisión ({hora_str}):</b> No hay ninguna licitación de tu interés.")
+
     print(f"Finalizado. Nuevas licitaciones notificadas: {nuevas_encontradas}")
 
 if __name__ == "__main__":
